@@ -6,7 +6,7 @@
   var canvas = document.querySelector('#image');
   var ctx = canvas.getContext('2d');
 
-  var myWorker = new Worker('scripts/worker.js');
+  var imageWorker = new Worker('scripts/worker.js');
 
   function handleImage(e){
     var reader = new FileReader();
@@ -45,7 +45,7 @@
     // Hint! This is where you should post messages to the web worker and
     // receive messages from the web worker.
 
-    myWorker.postMessage(imageData);
+    imageWorker.postMessage({'imageData':imageData, 'type': type});
 
     /*length = imageData.data.length / 4;
     for (i = j = 0, ref = length; 0 <= ref ? j <= ref : j >= ref; i = 0 <= ref ? ++j : --j) {
@@ -60,10 +60,20 @@
       imageData.data[i * 4 + 3] = pixel[3];
     }*/
 
-    myWorker.onmessage = function() {
+    imageWorker.onmessage = function(e) {
       toggleButtonsAbledness();
-      return ctx.putImageData(imageData, 0, 0);
+      var image = e.data;
+      if (image) return ctx.putImageData(e.data, 0, 0);
+      console.log("No manipulated image returned");
     }
+
+    imageWorker.onerror = function(error) {
+      function WorkerException (message) {
+        this.name = 'WorkerException';
+        this.message = message;
+      };
+      throw new WorkerException('Worker error.');
+    };
 
   };
 
